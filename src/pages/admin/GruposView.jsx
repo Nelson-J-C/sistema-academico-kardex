@@ -4,6 +4,8 @@ import grupoService from "../../services/grupoService";
 import materiaService from "../../services/materiaService";
 import docenteService from "../../services/docenteService";
 import periodoService from "../../services/periodoService";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Portal from "../../components/Portal";
 
 export default function AdminGruposView() {
     const [grupos, setGrupos] = useState([]);
@@ -18,6 +20,7 @@ export default function AdminGruposView() {
     const [form, setForm] = useState({ materia_id: "", docente_id: "", periodo_id: "", paralelo: "", cupo: "" });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
 
     const fetchData = async () => {
         try {
@@ -68,7 +71,6 @@ export default function AdminGruposView() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("¿Eliminar este grupo?")) return;
         try { await grupoService.delete(id); await fetchData(); }
         catch (err) { setError(err.message); }
     };
@@ -90,8 +92,8 @@ export default function AdminGruposView() {
                     </h1>
                     <p className="text-slate-500 mt-1">Crea paralelos, asigna docentes y configura cupos</p>
                 </div>
-                <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2">
-                    <Plus className="w-5 h-5" /> Nuevo Grupo
+                <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2 text-sm">
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Nuevo</span> Grupo
                 </button>
             </div>
 
@@ -158,7 +160,7 @@ export default function AdminGruposView() {
                                         <td className="px-6 py-3 text-right">
                                             <div className="flex justify-end gap-1">
                                                 <button onClick={() => openEdit(g)} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"><Edit className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDelete(g.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => setDeleteId(g.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -171,14 +173,15 @@ export default function AdminGruposView() {
 
             {/* Modal */}
             {modalOpen && (
+            <Portal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 border border-white animate-scale-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 border border-white animate-scale-in max-h-[90vh] flex flex-col">
                         <div className="flex items-center justify-between p-6 border-b border-slate-100">
                             <h2 className="text-xl font-bold text-slate-900">{editing ? "Editar Grupo" : "Crear Grupo"}</h2>
                             <button onClick={() => setModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
                         </div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
+                        <form onSubmit={handleSave} className="p-6 space-y-4 overflow-y-auto flex-1">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Materia *</label>
                                 <select value={form.materia_id} onChange={(e) => setForm({ ...form, materia_id: e.target.value })} required
@@ -229,7 +232,16 @@ export default function AdminGruposView() {
                         </form>
                     </div>
                 </div>
+            </Portal>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Eliminar Grupo"
+                message="¿Estás seguro de que deseas eliminar este grupo? Esta acción no se puede deshacer."
+                onConfirm={() => { handleDelete(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

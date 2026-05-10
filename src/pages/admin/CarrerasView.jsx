@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import carreraService from "../../services/carreraService";
 import { generarReporteCarreras } from "../../utils/pdfReports";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Portal from "../../components/Portal";
 
 export default function CarrerasView() {
     const [carreras, setCarreras] = useState([]);
@@ -15,6 +17,7 @@ export default function CarrerasView() {
     const [form, setForm] = useState({ nombre: "", descripcion: "" });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
 
     const fetchCarreras = async () => {
         try {
@@ -62,7 +65,6 @@ export default function CarrerasView() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("¿Estás seguro de eliminar esta carrera?")) return;
         try {
             await carreraService.delete(id);
             await fetchCarreras();
@@ -87,20 +89,20 @@ export default function CarrerasView() {
                         Administra las carreras y facultades de la institución
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                     <button
                         onClick={() => generarReporteCarreras(carreras)}
-                        className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-medium shadow-md transition-all flex items-center gap-2"
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium shadow-md transition-all flex items-center gap-2 text-sm"
                     >
-                        <FileDown className="w-5 h-5" />
-                        Exportar PDF
+                        <FileDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="hidden sm:inline">Exportar</span> PDF
                     </button>
                     <button
                         onClick={openCreate}
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-md shadow-primary-600/30 transform hover:scale-105 transition-all flex items-center gap-2"
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium shadow-md shadow-primary-600/30 transition-all flex items-center gap-2 text-sm"
                     >
-                        <Plus className="w-5 h-5" />
-                        Nueva Carrera
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="hidden sm:inline">Nueva</span> Carrera
                     </button>
                 </div>
             </div>
@@ -158,7 +160,7 @@ export default function CarrerasView() {
                                             <Edit className="w-4 h-4" />
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(carrera.id)}
+                                            onClick={() => setDeleteId(carrera.id)}
                                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                             title="Eliminar"
                                         >
@@ -190,9 +192,10 @@ export default function CarrerasView() {
 
             {/* Modal Crear/Editar */}
             {modalOpen && (
+            <Portal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 border border-white animate-scale-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 border border-white animate-scale-in max-h-[90vh] flex flex-col">
                         <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white">
                             <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
                                 <X className="w-5 h-5" />
@@ -228,7 +231,16 @@ export default function CarrerasView() {
                         </form>
                     </div>
                 </div>
+            </Portal>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Eliminar Carrera"
+                message="¿Estás seguro de que deseas eliminar esta carrera? Esta acción no se puede deshacer."
+                onConfirm={() => { handleDelete(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

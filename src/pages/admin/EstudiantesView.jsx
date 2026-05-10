@@ -3,6 +3,8 @@ import { Users, Search, Plus, Edit, Trash2, X, Save, Loader2, AlertCircle, FileD
 import estudianteService from "../../services/estudianteService";
 import carreraService from "../../services/carreraService";
 import { generarReporteEstudiantes } from "../../utils/pdfReports";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Portal from "../../components/Portal";
 
 export default function EstudiantesView() {
     const [estudiantes, setEstudiantes] = useState([]);
@@ -16,6 +18,7 @@ export default function EstudiantesView() {
     const [form, setForm] = useState({ carnet: "", nombres: "", paterno: "", materno: "", correo: "", telefono: "", registro_universitario: "", carrera_id: "" });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
 
     const fetchData = async () => {
         try {
@@ -64,7 +67,6 @@ export default function EstudiantesView() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("¿Eliminar este estudiante?")) return;
         try { await estudianteService.delete(id); await fetchData(); }
         catch (err) { setError(err.message); }
     };
@@ -88,13 +90,13 @@ export default function EstudiantesView() {
                     </h1>
                     <p className="text-slate-500 mt-1">Administra el registro y acceso de los estudiantes</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                     <button onClick={() => generarReporteEstudiantes(filtered)}
-                        className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
-                        <FileDown className="w-5 h-5" /> Exportar PDF
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 text-sm">
+                        <FileDown className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Exportar</span> PDF
                     </button>
-                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2">
-                        <Plus className="w-5 h-5" /> Nuevo Estudiante
+                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2 text-sm">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Nuevo</span> Estudiante
                     </button>
                 </div>
             </div>
@@ -161,7 +163,7 @@ export default function EstudiantesView() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button onClick={() => openEdit(est)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Editar"><Edit className="w-4 h-4" /></button>
-                                                    <button onClick={() => handleDelete(est.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                                                    <button onClick={() => setDeleteId(est.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -177,14 +179,15 @@ export default function EstudiantesView() {
             </div>
 
             {modalOpen && (
+            <Portal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative z-10 animate-scale-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative z-10 animate-scale-in max-h-[90vh] flex flex-col">
                         <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white">
                             <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full"><X className="w-5 h-5" /></button>
                             <h2 className="text-xl font-bold">{editing ? "Editar Estudiante" : "Nuevo Estudiante"}</h2>
                         </div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4 bg-slate-50 max-h-[60vh] overflow-y-auto">
+                        <form onSubmit={handleSave} className="p-6 space-y-4 bg-slate-50 overflow-y-auto flex-1">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Carnet</label>
@@ -243,7 +246,16 @@ export default function EstudiantesView() {
                         </form>
                     </div>
                 </div>
+            </Portal>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Eliminar Estudiante"
+                message="¿Estás seguro de que deseas eliminar este estudiante? Esta acción no se puede deshacer."
+                onConfirm={() => { handleDelete(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

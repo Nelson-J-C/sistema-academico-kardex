@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Plus, Edit, Lock, Unlock, X, Save, Loader2, AlertCircle, Trash2, FileDown } from "lucide-react";
 import periodoService from "../../services/periodoService";
 import { generarReportePeriodos } from "../../utils/pdfReports";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Portal from "../../components/Portal";
 
 export default function PeriodosView() {
     const [periodos, setPeriodos] = useState([]);
@@ -11,6 +13,7 @@ export default function PeriodosView() {
     const [form, setForm] = useState({ codigo: "", descripcion: "", fecha_inicio: "", fecha_fin: "", estado: true });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
 
     const fetchPeriodos = async () => {
         try {
@@ -54,7 +57,6 @@ export default function PeriodosView() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("¿Eliminar este periodo?")) return;
         try { await periodoService.delete(id); await fetchPeriodos(); }
         catch (err) { setError(err.message); }
     };
@@ -70,13 +72,13 @@ export default function PeriodosView() {
                     </h1>
                     <p className="text-slate-500 mt-1">Apertura y cierre de semestres o gestiones</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                     <button onClick={() => generarReportePeriodos(periodos)}
-                        className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
-                        <FileDown className="w-5 h-5" /> Exportar PDF
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 text-sm">
+                        <FileDown className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Exportar</span> PDF
                     </button>
-                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2">
-                        <Plus className="w-5 h-5" /> Aperturar Periodo
+                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2 text-sm">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Aperturar</span> Periodo
                     </button>
                 </div>
             </div>
@@ -120,7 +122,7 @@ export default function PeriodosView() {
                                                 <button onClick={() => handleToggle(per.id, per.estado)} className={`${per.estado ? "text-amber-600 hover:text-amber-800" : "text-slate-400 hover:text-slate-600"} transition-colors`} title={per.estado ? "Cerrar" : "Reabrir"}>
                                                     {per.estado ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                                                 </button>
-                                                <button onClick={() => handleDelete(per.id)} className="text-red-500 hover:text-red-700 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => setDeleteId(per.id)} className="text-red-500 hover:text-red-700 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -132,9 +134,10 @@ export default function PeriodosView() {
             </div>
 
             {modalOpen && (
+            <Portal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 animate-scale-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 animate-scale-in max-h-[90vh] flex flex-col">
                         <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white">
                             <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full"><X className="w-5 h-5" /></button>
                             <h2 className="text-xl font-bold">{editing ? "Editar Periodo" : "Nuevo Periodo"}</h2>
@@ -181,7 +184,16 @@ export default function PeriodosView() {
                         </form>
                     </div>
                 </div>
+            </Portal>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Eliminar Periodo"
+                message="¿Estás seguro de que deseas eliminar este periodo? Esta acción no se puede deshacer."
+                onConfirm={() => { handleDelete(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

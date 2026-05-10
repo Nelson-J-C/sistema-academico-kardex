@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { GraduationCap, Search, Plus, Edit, Trash2, X, Save, Loader2, AlertCircle, FileDown } from "lucide-react";
 import docenteService from "../../services/docenteService";
 import { generarReporteDocentes } from "../../utils/pdfReports";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Portal from "../../components/Portal";
 
 export default function DocentesView() {
     const [docentes, setDocentes] = useState([]);
@@ -12,6 +14,7 @@ export default function DocentesView() {
     const [form, setForm] = useState({ carnet: "", nombres: "", paterno: "", materno: "", correo: "", telefono: "", especialidad: "" });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
 
     const fetchDocentes = async () => {
         try { setLoading(true); setDocentes(await docenteService.getAll()); }
@@ -49,7 +52,6 @@ export default function DocentesView() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("¿Eliminar este docente?")) return;
         try { await docenteService.delete(id); await fetchDocentes(); }
         catch (err) { setError(err.message); }
     };
@@ -68,13 +70,13 @@ export default function DocentesView() {
                     </h1>
                     <p className="text-slate-500 mt-1">Administra la información de los docentes y sus especialidades</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                     <button onClick={() => generarReporteDocentes(filtered)}
-                        className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
-                        <FileDown className="w-5 h-5" /> Exportar PDF
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 text-sm">
+                        <FileDown className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Exportar</span> PDF
                     </button>
-                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2">
-                        <Plus className="w-5 h-5" /> Nuevo Docente
+                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2 text-sm">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Nuevo</span> Docente
                     </button>
                 </div>
             </div>
@@ -127,7 +129,7 @@ export default function DocentesView() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => openEdit(doc)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Editar"><Edit className="w-4 h-4" /></button>
-                                                <button onClick={() => handleDelete(doc.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => setDeleteId(doc.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -139,9 +141,10 @@ export default function DocentesView() {
             </div>
 
             {modalOpen && (
+            <Portal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative z-10 animate-scale-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative z-10 animate-scale-in max-h-[90vh] flex flex-col">
                         <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white">
                             <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full"><X className="w-5 h-5" /></button>
                             <h2 className="text-xl font-bold">{editing ? "Editar Docente" : "Nuevo Docente"}</h2>
@@ -183,7 +186,16 @@ export default function DocentesView() {
                         </form>
                     </div>
                 </div>
+            </Portal>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Eliminar Docente"
+                message="¿Estás seguro de que deseas eliminar este docente? Esta acción no se puede deshacer."
+                onConfirm={() => { handleDelete(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

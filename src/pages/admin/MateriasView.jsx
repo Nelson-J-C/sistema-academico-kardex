@@ -3,6 +3,8 @@ import { BookOpen, Search, Plus, Edit, Trash2, X, Save, Loader2, AlertCircle, Fi
 import materiaService from "../../services/materiaService";
 import carreraService from "../../services/carreraService";
 import { generarReporteMaterias } from "../../utils/pdfReports";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import Portal from "../../components/Portal";
 
 export default function MateriasView() {
     const [materias, setMaterias] = useState([]);
@@ -14,6 +16,7 @@ export default function MateriasView() {
     const [form, setForm] = useState({ sigla: "", nombre: "", descripcion: "", creditos: "", carrera_id: "" });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
     const [filterCarrera, setFilterCarrera] = useState("");
 
     const fetchData = async () => {
@@ -64,7 +67,6 @@ export default function MateriasView() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("¿Eliminar esta materia?")) return;
         try {
             await materiaService.delete(id);
             await fetchData();
@@ -88,13 +90,13 @@ export default function MateriasView() {
                     </h1>
                     <p className="text-slate-500 mt-1">Configura el catálogo de asignaturas por carrera</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                     <button onClick={() => generarReporteMaterias(filtered)}
-                        className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2">
-                        <FileDown className="w-5 h-5" /> Exportar PDF
+                        className="bg-slate-700 hover:bg-slate-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 text-sm">
+                        <FileDown className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Exportar</span> PDF
                     </button>
-                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2">
-                        <Plus className="w-5 h-5" /> Nueva Materia
+                    <button onClick={openCreate} className="bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors shadow-sm shadow-primary-600/30 flex items-center gap-2 text-sm">
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Nueva</span> Materia
                     </button>
                 </div>
             </div>
@@ -135,7 +137,7 @@ export default function MateriasView() {
                                     <span className="bg-slate-100 text-slate-600 text-sm font-semibold px-2 py-1 rounded font-mono">{mat.sigla}</span>
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => openEdit(mat)} className="text-slate-400 hover:text-blue-600 transition-colors" title="Editar"><Edit className="w-4 h-4" /></button>
-                                        <button onClick={() => handleDelete(mat.id)} className="text-slate-400 hover:text-red-600 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                                        <button onClick={() => setDeleteId(mat.id)} className="text-slate-400 hover:text-red-600 transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
                                     </div>
                                 </div>
                                 <h3 className="font-bold text-slate-800 text-lg leading-tight mb-2">{mat.nombre}</h3>
@@ -150,9 +152,10 @@ export default function MateriasView() {
             </div>
 
             {modalOpen && (
+            <Portal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 animate-scale-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 animate-scale-in max-h-[90vh] flex flex-col">
                         <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white">
                             <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full"><X className="w-5 h-5" /></button>
                             <h2 className="text-xl font-bold">{editing ? "Editar Materia" : "Nueva Materia"}</h2>
@@ -197,7 +200,16 @@ export default function MateriasView() {
                         </form>
                     </div>
                 </div>
+            </Portal>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Eliminar Materia"
+                message="¿Estás seguro de que deseas eliminar esta materia? Esta acción no se puede deshacer."
+                onConfirm={() => { handleDelete(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

@@ -7,6 +7,7 @@ import periodoService from "../../services/periodoService";
 import kardexService from "../../services/kardexService";
 import estudianteService from "../../services/estudianteService";
 import { generarBoletaInscripcion } from "../../utils/pdfReports";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 export default function InscripcionesView() {
     const { user } = useAuth();
@@ -17,6 +18,7 @@ export default function InscripcionesView() {
     const [inscribiendo, setInscribiendo] = useState(null);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [deleteId, setDeleteId] = useState(null);
 
     const fetchData = async () => {
         try {
@@ -77,7 +79,6 @@ export default function InscripcionesView() {
     };
 
     const handleDesinscribir = async (inscripcionId) => {
-        if (!confirm("¿Quitar esta inscripción?")) return;
         try {
             await inscripcionService.delete(inscripcionId);
             await fetchData();
@@ -197,7 +198,7 @@ export default function InscripcionesView() {
                                             <p className="font-semibold text-sm text-slate-800">{insc.grupo?.materia?.nombre}</p>
                                             <p className="text-xs text-slate-500">Grupo {insc.grupo?.paralelo} • {insc.grupo?.materia?.creditos} Créditos</p>
                                         </div>
-                                        <button onClick={() => handleDesinscribir(insc.id)} className="text-slate-400 hover:text-red-500 transition-colors">
+                                        <button onClick={() => setDeleteId(insc.id)} className="text-slate-400 hover:text-red-500 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -217,6 +218,14 @@ export default function InscripcionesView() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={deleteId !== null}
+                title="Quitar Inscripción"
+                message="¿Estás seguro de que deseas quitar esta inscripción?"
+                onConfirm={() => { handleDesinscribir(deleteId); setDeleteId(null); }}
+                onCancel={() => setDeleteId(null)}
+            />
         </div>
     );
 }

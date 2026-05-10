@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { X, UserCircle, Save, Mail, Phone, Lock, Loader2 } from "lucide-react";
 import personaService from "../services/personaService";
+import Portal from "./Portal";
 
 export default function ProfileModal({ isOpen, onClose }) {
     const { user, setUser } = useAuth();
@@ -57,6 +58,7 @@ export default function ProfileModal({ isOpen, onClose }) {
     };
 
     return (
+        <Portal>
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
@@ -65,7 +67,7 @@ export default function ProfileModal({ isOpen, onClose }) {
             ></div>
 
             {/* Modal */}
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in relative z-10 border border-white">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in relative z-10 border border-white max-h-[90vh] flex flex-col">
                 <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-6 text-white relative">
                     <button
                         onClick={onClose}
@@ -184,5 +186,6 @@ export default function ProfileModal({ isOpen, onClose }) {
                 </form>
             </div>
         </div>
+        </Portal>
     );
 }
